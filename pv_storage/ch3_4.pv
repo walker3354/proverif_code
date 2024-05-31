@@ -1,0 +1,71 @@
+type key.
+fun senc(bitstring, key): bitstring.
+reduc forall m: bitstring, k: key; sdec(senc(m,k),k) = m.
+
+type skey.
+type pkey.
+fun pk(skey): pkey.
+fun aenc(bitstring, pkey): bitstring.
+reduc forall m: bitstring, sk: skey; adec(aenc(m,pk(sk)),sk) = m.
+
+type sskey.
+type spkey.
+fun spk(sskey): spkey.
+fun sign(bitstring, sskey): bitstring.
+reduc forall m: bitstring, ssk: sskey; getmess(sign(m,ssk)) = m.
+reduc forall m: bitstring, ssk: sskey; checksign(sign(m,ssk),spk(ssk)) = m.
+
+free c:channel.
+free s:bitstring [private].
+query attacker(s).
+
+(* 客户端认为自己在使用key对称密钥和服务器进行协议交互 *)
+event acceptsClient(key).
+(* 服务器认为自己在使用key对称密钥和pkey公钥标识的客户端进行协议交互 *)
+event acceptsServer(key,pkey).
+(* pkey标识的客户端认为自己使用key和服务器进行协议交互结束 *)
+event termClient(key,pkey).
+(* 服务器认为自己使用key对称密钥和客户端进行协议交互结束 *)
+event termServer(key).
+
+(*
+对于每个以对称密钥x和服务器交互结束的客户端y
+前面总是存在认定以对称密钥x和客户端y交互的服务器
+*)
+query x:key,y:pkey; event(termClient(x,y))==>event(acceptsServer(x,y)).
+(*
+对于每个以对称密钥x交互结束的服务器
+前面总是存在一个区别于其它的“以对称密钥x和服务器交互的客户端”
+即单射关系
+*)
+query x:key; inj-event(termServer(x))==>inj-event(acceptsClient(x)).
+
+let clientA(pkA:pkey,skA:skey,pkB:spkey) = 
+	out(c,pkA);
+	in(c,x:bitstring); 
+	let y = adec(x,skA) in
+	let (=pkB,k:key) = checksign(y,pkB) in
+	(* 客户端解密成功+验证成功后即认为接受了使用密钥k通信 *)
+	event acceptsClient(k);
+	out(c,senc(s,k));
+	(* 客户端运行结束，本次是使用k通信，自己的公钥是pkA *)
+	event termClient(k,pkA).
+
+let serverB(pkB:spkey,skB:sskey,pkA:pkey) = 
+	in(c,pkX:pkey);
+	new k:key;
+	(* 服务器收到客户端公钥pkX，并创建了密钥k，即认为接受了使用密钥k和客户端pkX通信 *)
+	event acceptsServer(k,pkX);
+	out(c,aenc(sign((pkB,k),skB),pkX));
+	in(c,x:bitstring);
+	let z = sdec(x,k) in
+	(* 如果接收到的pkX确实是pkA，即认为服务器使用对称密钥k运行结束 *)
+	if pkX = pkA then event termServer(k).
+
+process
+	new skA:skey;
+	new skB:sskey;
+	let pkA = pk(skA) in out(c,pkA);
+	let pkB = spk(skB) in out(c,pkB);
+	( (!clientA(pkA,skA,pkB)) | (!serverB(pkB,skB,pkA)) )
+

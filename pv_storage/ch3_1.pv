@@ -1,0 +1,7 @@
+type skey.
+type pkey.
+
+fun pk(skey): pkey.
+fun aenc(bitstring, pkey): bitstring.
+
+reduc forall m: bitstring, k: skey; adec(aenc(m, pk(k)),k)=m.
