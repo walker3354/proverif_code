@@ -1,0 +1,119 @@
+(*i dont care time stamp*)
+free ch1: channel [private].
+free ch2: channel.
+
+const IDs: bitstring. (* identity of TA *)
+const IDi: bitstring. (* identity of I *)
+const IDj: bitstring. (* identity of J *)
+
+const Ti: bitstring. (* tag of I *)
+const Tj: bitstring. (* tag of J *)
+
+free Vs: bitstring [private].
+free Vi: bitstring [private].
+free Vj: bitstring [private].
+
+(* ECC operation *)
+const P: bitstring.
+const d: bitstring [private]. (*完全沒用*)
+fun mult(bitstring, bitstring): bitstring.
+fun addt(bitstring, bitstring): bitstring.
+
+(*Ascon operation*)
+fun ascon_enc(bitstring, bitstring, bitstring, bitstring): bitstring.
+reduc forall SK:bitstring, N:bitstring, AD:bitstring, PT:bitstring; ascon_denc(ascon_enc(SK,N,AD,PT),SK,N,AD) = PT.
+
+(* Number operation *)
+fun mod(bitstring, bitstring): bitstring.
+fun inv(bitstring): bitstring.(*reciprocal*)
+fun mul(bitstring, bitstring): bitstring.(*幕次*)
+fun add(bitstring, bitstring): bitstring.
+fun div(bitstring, bitstring): bitstring.
+fun minus(bitstring): bitstring.
+
+(* symmetric key encryption *)
+type key.
+fun s_mul(bitstring,bitstring):key.
+fun senc(bitstring, key): bitstring.
+reduc forall m: bitstring, k: key; sdec(senc(m, k), k) = m.
+
+(*Other important function*)
+fun hash1(bitstring): bitstring.
+fun hash2(bitstring, bitstring, bitstring, bitstring): bitstring.
+fun mac(bitstring, bitstring): bitstring.
+fun xor(bitstring, bitstring): bitstring.
+equation forall x: bitstring, y: bitstring; xor(xor(x, y), y) = x.
+
+(*event*)
+event initial_process_i(bitstring).
+event initial_process_j(bitstring).
+event term_process_i(bitstring).
+event term_process_j(bitstring).
+
+(* process TA*)
+let processTA = 
+    let Us = mult(Vs,P) in
+    in(ch1,(IDi:bitstring,Ui:bitstring));
+    new ri:bitstring; (*ri = random number*)
+    let Pi = mult(ri,P) in
+    let hi = hash1(xor(xor(IDi,Ui),Pi)) in
+    let Xi = add(ri,mul(hi,Vs)) in (*mod q is use to limited the range, we dont need here*)
+    let Yi = mult(Xi,P) in
+    out(ch1,(Xi,Yi,Pi,IDs,Us)).
+
+(*node I*)
+let processI_node (K:key)= 
+    event initial_process_i(IDi);
+    let Ui = mult(Vi,P) in
+    out(ch1,(IDi,Ui));
+    in(ch1,(Xi:bitstring,Yi:bitstring,Pi:bitstring,IDs:bitstring,Us:bitstring));
+    if mult(Xi,P) = add(Pi,hash1(xor(xor(IDi,Ui),Pi))) then (*start communication with J*)
+        new Ni: bitstring; (*fresh random number*)
+        out(ch2, (IDi,Ui,Yi,Ni,Ti,Us));
+        in (ch2,(IDj:bitstring,Uj:bitstring,Yj:bitstring,Nj:bitstring,Tj:bitstring));
+
+        (*Ascon*)
+        new Ri: bitstring; (*fresh random number*)
+        let Ki_1 = mul(Vi,Uj)in
+        let Ki_2 = mul(Xi,Yi)in
+        let SKi = hash1(xor(Nj,xor(Ni,xor(Ki_1,Ki_2)))) in
+        let N = xor(Ni,Nj) in
+        let AD= hash1(mul(Us,mul(Xi,Yj)))in
+        let PTi = xor(IDi,xor(IDj,Ri))in
+        let M3 = ascon_enc(SKi,N,AD,PTi) in
+        out(ch2,M3);
+
+        (*check PT*)
+        in(ch2,test_message:bitstring);
+        let PTj = sdec(test_message,K) in
+        if PTj = PTi then
+            event term_process_i(IDi).
+
+(*node J*)
+let processJ_node (K:key)= 
+    event initial_process_i(IDj);
+    let Uj = mult(Vj,P) in
+    (*skip registe phase*)
+    in(ch2, (IDi:bitstring,Ui:bitstring,Yi:bitstring,Ni:bitstring,Ti:bitstring,Us:bitstring));
+    new Nj: bitstring; (*fresh random number*)
+    new Xj: bitstring; (*portion private key*)
+    let Yj = mult(Xj,P) in (*portion public key*)
+    out(ch2, (IDj,Uj,Yj,Nj,Tj));
+
+    (*Ascon*)
+    in(ch2, M3:bitstring);
+    new Rj: bitstring; (*fresh random number*)
+    let Kj_1 = mul(Vj,Ui)in
+    let Kj_2 = mul(Xj,Yi)in
+    let Skj = hash1(xor(Nj,xor(Ni,xor(Kj_1,Kj_2)))) in
+    let N = xor(Ni,Nj) in
+    let AD = hash1(mul(Us,mul(Xj,Yi))) in
+    let PTj = ascon_denc(M3,Skj,N,AD) in
+    let test_message = senc(PTj,K) in
+    out(ch2,test_message);
+    event term_process_j(IDj).
+
+(*main process*)
+process
+    new K:key;
+    ((!processTA)|(processI_node(K))|(processJ_node(K)))
