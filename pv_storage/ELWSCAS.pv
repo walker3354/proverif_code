@@ -13,6 +13,10 @@ free Vs: bitstring [private].
 free Vi: bitstring [private].
 free Vj: bitstring [private].
 
+(*session key*)
+free SKi: bitstring[private].
+free Skj: bitstring[private].
+
 (* ECC operation *)
 const P: bitstring.
 const d: bitstring [private]. (*完全沒用*)
@@ -49,6 +53,13 @@ event initial_process_i(bitstring).
 event initial_process_j(bitstring).
 event term_process_i(bitstring).
 event term_process_j(bitstring).
+
+(*attacker*)
+query attacker(Vs).
+query attacker(Vi).
+query attacker(Vj).
+query x: bitstring; inj-event(term_process_i(x)) ==> inj-event(initial_process_i(x)).
+query x: bitstring; inj-event(term_process_j(x)) ==> inj-event(initial_process_j(x)).
 
 (* process TA*)
 let processTA = 

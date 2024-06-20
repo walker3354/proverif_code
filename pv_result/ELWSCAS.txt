@@ -1,0 +1,177 @@
+PS C:\Users\walke\Downloads\proverif2.05> ./proverif .\pv_storage\ELWSCAS.pv
+File ".\pv_storage\ELWSCAS.pv", line 67, characters 13-15:
+Warning: identifier IDi rebound.
+File ".\pv_storage\ELWSCAS.pv", line 80, characters 52-54:
+Warning: identifier IDs rebound.
+File ".\pv_storage\ELWSCAS.pv", line 84, characters 18-20:
+Warning: identifier IDj rebound.
+File ".\pv_storage\ELWSCAS.pv", line 84, characters 71-72:
+Warning: identifier Tj rebound.
+File ".\pv_storage\ELWSCAS.pv", line 90, characters 13-15:
+Warning: identifier SKi rebound.
+File ".\pv_storage\ELWSCAS.pv", line 108, characters 14-16:
+Warning: identifier IDi rebound.
+File ".\pv_storage\ELWSCAS.pv", line 108, characters 67-68:
+Warning: identifier Ti rebound.
+File ".\pv_storage\ELWSCAS.pv", line 119, characters 9-11:
+Warning: identifier Skj rebound.
+Linear part: No equation.
+Convergent part:
+xor(xor(x,y),y) = x
+Completing equations...
+Completed equations:
+xor(xor(x,y),y) = x
+Process 0 (that is, the initial process):
+{1}new K: key;
+(
+    {2}!
+    {3}let Us: bitstring = mult(Vs,P) in
+    {4}in(ch1, (IDi_1: bitstring,Ui: bitstring));
+    {5}new ri: bitstring;
+    {6}let Pi: bitstring = mult(ri,P) in
+    {7}let hi: bitstring = hash1(xor(xor(IDi_1,Ui),Pi)) in
+    {8}let Xi: bitstring = add(ri,mul(hi,Vs)) in
+    {9}let Yi: bitstring = mult(Xi,P) in
+    {10}out(ch1, (Xi,Yi,Pi,IDs,Us))
+) | (
+    {11}let K_1: key = K in
+    {12}event initial_process_i(IDi);
+    {13}let Ui_1: bitstring = mult(Vi,P) in
+    {14}out(ch1, (IDi,Ui_1));
+    {15}in(ch1, (Xi_1: bitstring,Yi_1: bitstring,Pi_1: bitstring,IDs_1: bitstring,Us_1: bitstring));
+    {16}if (mult(Xi_1,P) = add(Pi_1,hash1(xor(xor(IDi,Ui_1),Pi_1)))) then
+    {17}new Ni: bitstring;
+    {18}out(ch2, (IDi,Ui_1,Yi_1,Ni,Ti,Us_1));
+    {19}in(ch2, (IDj_1: bitstring,Uj: bitstring,Yj: bitstring,Nj: bitstring,Tj_1: bitstring));
+    {20}new Ri: bitstring;
+    {21}let Ki_1: bitstring = mul(Vi,Uj) in
+    {22}let Ki_2: bitstring = mul(Xi_1,Yi_1) in
+    {23}let SKi_1: bitstring = hash1(xor(Nj,xor(Ni,xor(Ki_1,Ki_2)))) in
+    {24}let N: bitstring = xor(Ni,Nj) in
+    {25}let AD: bitstring = hash1(mul(Us_1,mul(Xi_1,Yj))) in
+    {26}let PTi: bitstring = xor(IDi,xor(IDj_1,Ri)) in
+    {27}let M3: bitstring = ascon_enc(SKi_1,N,AD,PTi) in
+    {28}out(ch2, M3);
+    {29}in(ch2, test_message: bitstring);
+    {30}let PTj: bitstring = sdec(test_message,K_1) in
+    {31}if (PTj = PTi) then
+    {32}event term_process_i(IDi)
+) | (
+    {33}let K_2: key = K in
+    {34}event initial_process_i(IDj);
+    {35}let Uj_1: bitstring = mult(Vj,P) in
+    {36}in(ch2, (IDi_2: bitstring,Ui_2: bitstring,Yi_2: bitstring,Ni_1: bitstring,Ti_1: bitstring,Us_2: bitstring));
+    {37}new Nj_1: bitstring;
+    {38}new Xj: bitstring;
+    {39}let Yj_1: bitstring = mult(Xj,P) in
+    {40}out(ch2, (IDj,Uj_1,Yj_1,Nj_1,Tj));
+    {41}in(ch2, M3_1: bitstring);
+    {42}new Rj: bitstring;
+    {43}let Kj_1: bitstring = mul(Vj,Ui_2) in
+    {44}let Kj_2: bitstring = mul(Xj,Yi_2) in
+    {45}let Skj_1: bitstring = hash1(xor(Nj_1,xor(Ni_1,xor(Kj_1,Kj_2)))) in
+    {46}let N_1: bitstring = xor(Ni_1,Nj_1) in
+    {47}let AD_1: bitstring = hash1(mul(Us_2,mul(Xj,Yi_2))) in
+    {48}let PTj_1: bitstring = ascon_denc(M3_1,Skj_1,N_1,AD_1) in
+    {49}let test_message_1: bitstring = senc(PTj_1,K_2) in
+    {50}out(ch2, test_message_1);
+    {51}event term_process_j(IDj)
+)
+
+--  Process 1 (that is, process 0, with let moved downwards):
+{1}new K: key;
+(
+    {2}!
+    {4}in(ch1, (IDi_1: bitstring,Ui: bitstring));
+    {5}new ri: bitstring;
+    {6}let Pi: bitstring = mult(ri,P) in
+    {7}let hi: bitstring = hash1(xor(xor(IDi_1,Ui),Pi)) in
+    {8}let Xi: bitstring = add(ri,mul(hi,Vs)) in
+    {9}let Yi: bitstring = mult(Xi,P) in
+    {3}let Us: bitstring = mult(Vs,P) in
+    {10}out(ch1, (Xi,Yi,Pi,IDs,Us))
+) | (
+    {12}event initial_process_i(IDi);
+    {13}let Ui_1: bitstring = mult(Vi,P) in
+    {14}out(ch1, (IDi,Ui_1));
+    {15}in(ch1, (Xi_1: bitstring,Yi_1: bitstring,Pi_1: bitstring,IDs_1: bitstring,Us_1: bitstring));
+    {16}if (mult(Xi_1,P) = add(Pi_1,hash1(xor(xor(IDi,Ui_1),Pi_1)))) then
+    {17}new Ni: bitstring;
+    {18}out(ch2, (IDi,Ui_1,Yi_1,Ni,Ti,Us_1));
+    {19}in(ch2, (IDj_1: bitstring,Uj: bitstring,Yj: bitstring,Nj: bitstring,Tj_1: bitstring));
+    {20}new Ri: bitstring;
+    {26}let PTi: bitstring = xor(IDi,xor(IDj_1,Ri)) in
+    {25}let AD: bitstring = hash1(mul(Us_1,mul(Xi_1,Yj))) in
+    {24}let N: bitstring = xor(Ni,Nj) in
+    {22}let Ki_2: bitstring = mul(Xi_1,Yi_1) in
+    {21}let Ki_1: bitstring = mul(Vi,Uj) in
+    {23}let SKi_1: bitstring = hash1(xor(Nj,xor(Ni,xor(Ki_1,Ki_2)))) in
+    {27}let M3: bitstring = ascon_enc(SKi_1,N,AD,PTi) in
+    {28}out(ch2, M3);
+    {29}in(ch2, test_message: bitstring);
+    {11}let K_1: key = K in
+    {30}let PTj: bitstring = sdec(test_message,K_1) in
+    {31}if (PTj = PTi) then
+    {32}event term_process_i(IDi)
+) | (
+    {34}event initial_process_i(IDj);
+    {36}in(ch2, (IDi_2: bitstring,Ui_2: bitstring,Yi_2: bitstring,Ni_1: bitstring,Ti_1: bitstring,Us_2: bitstring));
+    {37}new Nj_1: bitstring;
+    {38}new Xj: bitstring;
+    {39}let Yj_1: bitstring = mult(Xj,P) in
+    {35}let Uj_1: bitstring = mult(Vj,P) in
+    {40}out(ch2, (IDj,Uj_1,Yj_1,Nj_1,Tj));
+    {41}in(ch2, M3_1: bitstring);
+    {42}new Rj: bitstring;
+    {47}let AD_1: bitstring = hash1(mul(Us_2,mul(Xj,Yi_2))) in
+    {46}let N_1: bitstring = xor(Ni_1,Nj_1) in
+    {44}let Kj_2: bitstring = mul(Xj,Yi_2) in
+    {43}let Kj_1: bitstring = mul(Vj,Ui_2) in
+    {45}let Skj_1: bitstring = hash1(xor(Nj_1,xor(Ni_1,xor(Kj_1,Kj_2)))) in
+    {48}let PTj_1: bitstring = ascon_denc(M3_1,Skj_1,N_1,AD_1) in
+    {33}let K_2: key = K in
+    {49}let test_message_1: bitstring = senc(PTj_1,K_2) in
+    {50}out(ch2, test_message_1);
+    {51}event term_process_j(IDj)
+)
+
+-- Query not attacker(Vs[]) in process 1.
+Translating the process into Horn clauses...
+Completing...
+Starting query not attacker(Vs[])
+RESULT not attacker(Vs[]) is true.
+-- Query not attacker(Vi[]) in process 1.
+Translating the process into Horn clauses...
+Completing...
+Starting query not attacker(Vi[])
+RESULT not attacker(Vi[]) is true.
+-- Query not attacker(Vj[]) in process 1.
+Translating the process into Horn clauses...
+Completing...
+Starting query not attacker(Vj[])
+RESULT not attacker(Vj[]) is true.
+-- Query inj-event(term_process_i(x)) ==> inj-event(initial_process_i(x)) in process 1.
+Translating the process into Horn clauses...
+Completing...
+Starting query inj-event(term_process_i(x)) ==> inj-event(initial_process_i(x))
+RESULT inj-event(term_process_i(x)) ==> inj-event(initial_process_i(x)) is true.
+-- Query inj-event(term_process_j(x)) ==> inj-event(initial_process_j(x)) in process 1.
+Translating the process into Horn clauses...
+Completing...
+Starting query inj-event(term_process_j(x)) ==> inj-event(initial_process_j(x))
+RESULT inj-event(term_process_j(x)) ==> inj-event(initial_process_j(x)) is true.
+
+--------------------------------------------------------------
+Verification summary:
+
+Query not attacker(Vs[]) is true.
+
+Query not attacker(Vi[]) is true.
+
+Query not attacker(Vj[]) is true.
+
+Query inj-event(term_process_i(x)) ==> inj-event(initial_process_i(x)) is true.
+
+Query inj-event(term_process_j(x)) ==> inj-event(initial_process_j(x)) is true.
+
+--------------------------------------------------------------
