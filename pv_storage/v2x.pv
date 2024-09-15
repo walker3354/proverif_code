@@ -47,28 +47,29 @@ event term_process_v(bitstring).
 event term_process_u(bitstring).
 
 (*attacker*)
-query attacker(p_t).
+query attacker(p_t).(*each device sk*)
 query attacker(p_v).
 query attacker(p_u).
-query attacker(Sk_uv).
+query attacker(Sk_uv).(*the session between v and u*)
 query attacker(Sk_vu).
-query attacker(s_message).
+query attacker(s_message).(*message*)
 query x: bitstring; inj-event(term_process_v(x)) ==> inj-event(initial_process_v(x)).
 query x: bitstring; inj-event(term_process_u(x)) ==> inj-event(initial_process_u(x)).
 
 
 (*t*)
 let process_t = 
+    (*generate sk and pk*)
     new pf: bitstring;
     new pc: bitstring;
     let p_t = mul(pf, P) in
-    let Q_t = mul(p_t, P) in
+    let Q_t = mult(p_t, P) in
 
     (*v registe*)
     in(ch1, IDV: bitstring);
     new rtv: bitstring;
-    let Ai_v = add(p_t, mult(IDV, rtv)) in
-    let Ar_v = rtv in
+    let Ai_v = mult(add(p_t, mult(IDV, rtv)),P) in
+    let Ar_v = mult(rtv, P) in
     out(ch1, (Ai_v, Ar_v,Q_t)).
 
 (*v*)
@@ -78,12 +79,12 @@ let process_v(kc:key) =
     out(ch1, IDV);
     new rv: bitstring;
     in(ch1, (Ai_v: bitstring, Ar_v: bitstring, Q_t:bitstring));
-    let p_v = mul(Ai_v, rv) in
-    let Q_v = mul(p_v, P) in
+    let p_v = mul(Ai_v, rv) in(*sk of v*)
+    let Q_v = mult(p_v, P) in(*pk of v*)
 
     (*broadcast*)
     let E_Q_v = senc(Q_v, kc) in
-    out(ch2,(Ai_v, Ar_v, E_Q_v, Q_t));
+    out(ch2,(Ai_v, Ar_v, E_Q_v, Q_t));(*Q_t was TA pk,to give u TA pk*)
 
     (*receive u public key*)
     in(ch2, E_Q_u: bitstring);
@@ -98,9 +99,9 @@ let process_v(kc:key) =
 
 (*u*)
 let process_u (kc:key)= 
-    (*regsite phase*)
+    (*regsite phase skip*)
     event initial_process_u(IDU);
-    let Q_u = mul(p_u, P) in
+    let Q_u = mult(p_u, P) in
 
     (*receive v  broadcast*)
     in(ch2, (Ai_v: bitstring, Ar_v: bitstring, E_Q_v: bitstring, Q_t: bitstring));
